@@ -137,6 +137,11 @@
                                 <option value="income">Receita</option>
                                 <option value="expense">Despesa</option>
                             </select>
+                            <label>Vincular Cliente (Opcional)</label>
+                            <select id="trans-client-select">
+                                <option value="">Selecione...</option>
+                            </select>
+                            <label for="trans-date">Data</label>
                             <input type="date" id="trans-date" required>
                              <select id="trans-status" required>
                                 <option value="pending">Pendente</option>
@@ -165,27 +170,58 @@
     </div>
 
     <div id="modal-add-client" class="modal">
-        <div class="modal-content">
+        <div class="modal-content modal-lg">
             <header class="modal-header">
-                <h2>Novo Cliente</h2>
+                <h2 id="modal-client-title">Novo Cliente</h2>
                 <button class="modal-close-btn" data-modal="modal-add-client">
                     <i data-lucide="x"></i>
                 </button>
             </header>
             <div class="modal-body">
                 <form id="form-add-client">
-                    <input type="text" id="client-name" placeholder="Nome completo" required>
-                    <input type="email" id="client-email" placeholder="Email">
-                    <input type="tel" id="client-phone" placeholder="Telefone">
-                    <textarea id="client-notes" placeholder="Anotações..."></textarea>
-                    <button type="submit">Salvar Cliente</button>
+                    <input type="hidden" id="editing-client-id">
+                    
+                    <label for="client-type">Tipo de Cliente</label>
+                    <select id="client-type" required>
+                        <option value="PF">Pessoa Física</option>
+                        <option value="PJ">Pessoa Jurídica</option>
+                    </select>
+                    
+                    <div id="fields-pj" class="client-type-fields" style="display: none;">
+                        <input type="text" id="client-razaoSocial" placeholder="Razão Social">
+                        <input type="text" id="client-cnpj" placeholder="CNPJ">
+                        <input type="text" id="client-contactName-pj" placeholder="Nome do Contato">
+                    </div>
+
+                    <div id="fields-pf" class="client-type-fields">
+                        <input type="text" id="client-name-pf" placeholder="Nome Completo">
+                        <input type="text" id="client-cpf" placeholder="CPF">
+                        <input type="text" id="client-rg" placeholder="RG">
+                        <label for="client-dob">Data de Nascimento</label>
+                        <input type="date" id="client-dob">
+                    </div>
+                    
+                    <hr class="form-divider">
+                    
+                    <div class="form-grid">
+                        <input type="text" id="client-cep" placeholder="CEP" style="grid-column: 1 / 3;">
+                        <input type="text" id="client-address" placeholder="Endereço (Rua, Av...)" style="grid-column: 1 / 4;">
+                        <input type="text" id="client-number" placeholder="Número" style="grid-column: 4 / 5;">
+                        <input type="text" id="client-neighborhood" placeholder="Bairro" style="grid-column: 1 / 3;">
+                        <input type="text" id="client-city" placeholder="Cidade" style="grid-column: 3 / 5;">
+                        <input type="text" id="client-state" placeholder="Estado (UF)" style="grid-column: 1 / 2;">
+                        <input type="text" id="client-phone" placeholder="Telefone / WhatsApp" style="grid-column: 2 / 5;">
+                        <input type="email" id="client-email" placeholder="E-mail" style="grid-column: 1 / 5;">
+                    </div>
+                    
+                    <button type="submit" id="btn-save-client">Salvar Cliente</button>
                 </form>
             </div>
         </div>
     </div>
 
     <div id="modal-add-event" class="modal">
-        <div class="modal-content">
+        <div class.modal-content">
             <header class="modal-header">
                 <h2>Novo Evento</h2>
                 <button class="modal-close-btn" data-modal="modal-add-event">
@@ -206,12 +242,100 @@
                     <input type="text" id="event-location" placeholder="Local do evento">
                     <select id="event-status" required>
                         <option value="pending">Pendente</option>
+
                         <option value="confirmed">Confirmado</option>
                         <option value="completed">Concluído</option>
                     </select>
                     <button type="submit">Salvar Evento</button>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <div id="modal-client-details" class="modal">
+        <div class="modal-content modal-lg">
+            <header class="modal-header">
+                <h2 id="details-client-name">Relatório do Cliente</h2>
+                <button class="modal-close-btn" data-modal="modal-client-details">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="modal-body" id="details-client-content">
+                <p>Carregando...</p>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-danger" id="btn-delete-client">
+                    <i data-lucide="trash-2"></i> Excluir Cliente
+                </button>
+                <button class="btn-secondary" id="btn-edit-client">
+                    <i data-lucide="edit-3"></i> Editar Dados
+                </button>
+            </footer>
+        </div>
+    </div>
+    
+    <div id="modal-confirm-delete" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Confirmar Exclusão</h2>
+                <button class="modal-close-btn" data-modal="modal-confirm-delete">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir <strong id="delete-item-name">este item</strong>? Esta ação não pode ser desfeita.</p>
+                <input type="hidden" id="delete-item-id">
+                <input type="hidden" id="delete-item-collection">
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-secondary modal-close-btn" data-modal="modal-confirm-delete">
+                    Cancelar
+                </button>
+                <button class="btn-danger" id="btn-confirm-delete-action">
+                    Sim, Excluir
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <div id="modal-message" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-message-title">Aviso</h2>
+                <button class="modal-close-btn" data-modal="modal-message">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="modal-body">
+                <p id="modal-message-text">Mensagem aqui.</p>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-primary modal-close-btn" data-modal="modal-message">
+                    OK
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <div id="modal-confirm-generic" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-confirm-generic-title">Confirmação</h2>
+                <button class="modal-close-btn" data-modal="modal-confirm-generic">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="modal-body">
+                <p id="modal-confirm-generic-text">Tem certeza?</p>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-secondary" id="btn-confirm-generic-cancel">
+                    Cancelar
+                </button>
+                <button class="btn-primary" id="btn-confirm-generic-ok">
+                    Confirmar
+                </button>
+            </footer>
         </div>
     </div>
 

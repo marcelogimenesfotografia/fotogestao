@@ -1,11 +1,13 @@
-// app.js (Versão 2 - Com Sidebar e FullCalendar)
+// app.js (Versão 3.1 - SINTAXE V8 e 100% MODAIS)
 
 // --- Variáveis Globais de Estado ---
 let currentUser = null;
 let currentUserId = null;
-let clientCache = []; // Cache de clientes
-let calendar = null; // Objeto do FullCalendar
+let clientCache = []; 
+let calendar = null; 
 let isCalendarInitialized = false;
+let genericConfirmCallback = null; // Para o modal de confirmação genérico
+let genericCancelCallback = null;
 
 // --- Seletores de DOM (Auth) ---
 const authContainer = document.getElementById('auth-container');
@@ -31,15 +33,10 @@ const btnLogout = document.getElementById('btn-logout');
 const clientsList = document.getElementById('clients-list');
 const searchClient = document.getElementById('search-client');
 const btnShowAddClient = document.getElementById('btn-show-add-client');
-const modalAddClient = document.getElementById('modal-add-client');
-const formAddClient = document.getElementById('form-add-client');
 
 // --- Seletores (Página Agenda) ---
 const calendarEl = document.getElementById('calendar');
 const btnShowAddEvent = document.getElementById('btn-show-add-event');
-const modalAddEvent = document.getElementById('modal-add-event');
-const formAddEvent = document.getElementById('form-add-event');
-const eventClientSelect = document.getElementById('event-client-select');
 const btnViewMonth = document.getElementById('btn-view-month');
 const btnViewWeek = document.getElementById('btn-view-week');
 const btnViewList = document.getElementById('btn-view-list');
@@ -53,29 +50,61 @@ const formSettings = document.getElementById('form-settings');
 const summaryEventos = document.getElementById('summary-eventos');
 const summaryFinanceiro = document.getElementById('summary-financeiro');
 
-// --- 1. LÓGICA DE AUTENTICAÇÃO (Sem alterações) ---
+// --- Seletores (Modais de Conteúdo) ---
+const modalAddClient = document.getElementById('modal-add-client');
+const modalAddEvent = document.getElementById('modal-add-event');
+const modalClientDetails = document.getElementById('modal-client-details');
+const modalConfirmDelete = document.getElementById('modal-confirm-delete');
+
+// --- Seletores (Modais Genéricos - NOVOS) ---
+const modalMessage = document.getElementById('modal-message');
+const modalMessageTitle = document.getElementById('modal-message-title');
+const modalMessageText = document.getElementById('modal-message-text');
+const modalConfirmGeneric = document.getElementById('modal-confirm-generic');
+const modalConfirmGenericTitle = document.getElementById('modal-confirm-generic-title');
+const modalConfirmGenericText = document.getElementById('modal-confirm-generic-text');
+const btnConfirmGenericOk = document.getElementById('btn-confirm-generic-ok');
+const btnConfirmGenericCancel = document.getElementById('btn-confirm-generic-cancel');
+
+// --- Seletores (Form Novo Cliente) ---
+const formAddClient = document.getElementById('form-add-client');
+const modalClientTitle = document.getElementById('modal-client-title');
+const clientTypeSelect = document.getElementById('client-type');
+const fieldsPf = document.getElementById('fields-pf');
+const fieldsPj = document.getElementById('fields-pj');
+const cepInput = document.getElementById('client-cep');
+const editingClientId = document.getElementById('editing-client-id');
+const btnSaveClient = document.getElementById('btn-save-client');
+
+// --- Seletores (Modal Detalhes Cliente) ---
+const detailsClientName = document.getElementById('details-client-name');
+const detailsClientContent = document.getElementById('details-client-content');
+const btnEditClient = document.getElementById('btn-edit-client');
+const btnDeleteClient = document.getElementById('btn-delete-client');
+
+// --- Seletores (Modal Confirmação Exclusão) ---
+const deleteItemName = document.getElementById('delete-item-name');
+const deleteItemId = document.getElementById('delete-item-id');
+const deleteItemCollection = document.getElementById('delete-item-collection');
+const btnConfirmDeleteAction = document.getElementById('btn-confirm-delete-action');
+
+
+// --- 1. LÓGICA DE AUTENTICAÇÃO (SINTAXE V8) ---
 auth.onAuthStateChanged(user => {
     if (user) {
-        currentUser = user;
-        currentUserId = user.uid;
+        currentUser = user; currentUserId = user.uid;
         authContainer.style.display = 'none';
-        appContainer.style.display = 'flex'; // Mudou de 'block' para 'flex'
+        appContainer.style.display = 'flex';
         loadUserData();
         navigateTo('inicial');
-        lucide.createIcons(); // Recria ícones ao logar
+        lucide.createIcons(); 
     } else {
-        currentUser = null;
-        currentUserId = null;
+        currentUser = null; currentUserId = null;
         authContainer.style.display = 'flex';
         appContainer.style.display = 'none';
-        if (calendar) { // Destrói o calendário ao sair
-            calendar.destroy();
-            isCalendarInitialized = false;
-        }
+        if (calendar) { calendar.destroy(); isCalendarInitialized = false; }
     }
 });
-// ... (Funções de login, signup e logout iguais às da v1) ...
-// (Vou omitir por brevidade, use as da resposta anterior)
 // Processar Cadastro (Signup)
 btnSignup.addEventListener('click', async () => {
     const name = document.getElementById('signup-name').value;
@@ -109,14 +138,12 @@ btnLogin.addEventListener('click', async () => {
         btnLogin.disabled = false; btnLogin.textContent = 'Entrar';
     }
 });
-// Processar Logout
 btnLogout.addEventListener('click', async () => { await auth.signOut(); });
-// Alternar Forms
 showSignup.addEventListener('click', (e) => { e.preventDefault(); loginForm.style.display = 'none'; signupForm.style.display = 'block'; authError.textContent = ''; });
 showLogin.addEventListener('click', (e) => { e.preventDefault(); loginForm.style.display = 'block'; signupForm.style.display = 'none'; authError.textContent = ''; });
 
 
-// --- 2. LÓGICA DE NAVEGAÇÃO (Atualizada) ---
+// --- 2. LÓGICA DE NAVEGAÇÃO ---
 appNav.addEventListener('click', (e) => {
     const navBtn = e.target.closest('.nav-btn');
     if (navBtn) {
@@ -127,79 +154,101 @@ appNav.addEventListener('click', (e) => {
         }
     }
 });
-
 function navigateTo(pageName) {
     allPages.forEach(page => page.classList.remove('active'));
     document.getElementById(`page-${pageName}`).classList.add('active');
-
     const pageTitles = {
         'inicial': 'Inicial', 'clientes': 'Clientes', 'agenda': 'Agenda',
         'financeiro': 'Financeiro', 'configuracoes': 'Configurações'
     };
     pageTitle.textContent = pageTitles[pageName] || 'FotoCRM';
-
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.page === pageName);
     });
-
     loadPageData(pageName);
 }
+btnMenuToggle.addEventListener('click', () => { sidebar.classList.toggle('open'); });
 
-// Menu Mobile Toggle
-btnMenuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-});
 
-// --- 3. GESTÃO DE MODAIS (Novo) ---
+// --- 3. GESTÃO DE MODAIS (100% SEM ALERTS) ---
 function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
+    const modal = document.getElementById(modalId);
+    if(modal) {
+        modal.classList.add('active');
+        lucide.createIcons(); // Recria ícones dentro do modal
+    }
 }
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    const modal = document.getElementById(modalId);
+    if(modal) modal.classList.remove('active');
 }
 
-// Listeners para abrir modais
-btnShowAddClient.addEventListener('click', () => openModal('modal-add-client'));
-btnShowAddEvent.addEventListener('click', () => openModal('modal-add-event'));
-
-// Listeners para fechar modais (botão X)
-document.querySelectorAll('.modal-close-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        closeModal(btn.dataset.modal);
-    });
-});
-// Listeners para fechar modais (clique fora)
+// Listeners para fechar modais (botão X e fundo)
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
+        // Se clicar no fundo (o próprio modal) ou num botão .modal-close-btn
+        if (e.target === modal || e.target.closest('.modal-close-btn')) {
+            // Exceção para o modal de confirmação genérico (só fecha no cancelar)
+            if(modal.id === 'modal-confirm-generic' && !e.target.closest('#btn-confirm-generic-cancel')) {
+                // Não fecha se clicar no OK ou no fundo
+                if(e.target === modal) return; 
+            }
             closeModal(modal.id);
         }
     });
+});
+
+// Listeners para abrir modais de CONTEÚDO
+btnShowAddClient.addEventListener('click', () => {
+    formAddClient.reset();
+    editingClientId.value = '';
+    modalClientTitle.textContent = 'Novo Cliente';
+    btnSaveClient.textContent = 'Salvar Cliente';
+    toggleClientFields('PF');
+    openModal('modal-add-client');
+});
+btnShowAddEvent.addEventListener('click', () => openModal('modal-add-event'));
+
+// Funções para Modais GENÉRICOS (Substitutos de Alert/Confirm)
+function openModalMessage(message, title = 'Aviso') {
+    modalMessageText.innerHTML = message; // .innerHTML para permitir <br>
+    modalMessageTitle.textContent = title;
+    openModal('modal-message');
+}
+
+function openModalConfirm(message, onConfirm, onCancel = null, title = 'Confirmação') {
+    modalConfirmGenericText.innerHTML = message;
+    modalConfirmGenericTitle.textContent = title;
+    genericConfirmCallback = onConfirm; // Armazena o callback
+    genericCancelCallback = onCancel;
+    openModal('modal-confirm-generic');
+}
+
+// Listeners para os botões de confirmação genérica
+btnConfirmGenericOk.addEventListener('click', () => {
+    if (typeof genericConfirmCallback === 'function') {
+        genericConfirmCallback();
+    }
+    closeModal('modal-confirm-generic');
+});
+btnConfirmGenericCancel.addEventListener('click', () => {
+    if (typeof genericCancelCallback === 'function') {
+        genericCancelCallback();
+    }
+    closeModal('modal-confirm-generic');
 });
 
 
 // --- 4. CARREGAMENTO DE DADOS DAS PÁGINAS ---
 async function loadPageData(pageName) {
     switch (pageName) {
-        case 'inicial':
-            loadDashboard();
-            break;
-        case 'clientes':
-            loadClients();
-            break;
-        case 'agenda':
-            await loadClientsForSelect(); // Garante que clientes estão carregados
-            initializeCalendar(); // INICIALIZA O CALENDÁRIO
-            break;
-        case 'financeiro':
-            loadTransactions();
-            break;
-        case 'configuracoes':
-            loadSettings();
-            break;
+        case 'inicial': loadDashboard(); break;
+        case 'clientes': loadClients(); break;
+        case 'agenda': await loadClientsForSelect(); initializeCalendar(); break;
+        case 'financeiro': await loadClientsForSelect(); loadTransactions(); break;
+        case 'configuracoes': loadSettings(); break;
     }
 }
-
 async function loadUserData() {
     if (!currentUserId) return;
     const userDoc = await db.collection('users').doc(currentUserId).get();
@@ -208,8 +257,8 @@ async function loadUserData() {
     }
 }
 
-// --- 5. MÓDULO: DASHBOARD (Igual à v1) ---
-// (Omitido por brevidade, use o da v1)
+
+// --- 5. MÓDULO: DASHBOARD ---
 async function loadDashboard() { loadSummaryEvents(); loadSummaryFinance(); }
 async function loadSummaryEvents() {
     if (!currentUserId) return; summaryEventos.innerHTML = '<p>Carregando...</p>';
@@ -236,32 +285,106 @@ async function loadSummaryFinance() {
 }
 
 
-// --- 6. MÓDULO: CLIENTES (Atualizado) ---
+// --- 6. MÓDULO: CLIENTES (100% Modais) ---
 
-// Adicionar Cliente (agora pelo modal)
-formAddClient.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentUserId) return;
+// Toggle PF/PJ
+clientTypeSelect.addEventListener('change', (e) => toggleClientFields(e.target.value));
+function toggleClientFields(type) {
+    fieldsPf.style.display = (type === 'PF') ? 'block' : 'none';
+    fieldsPj.style.display = (type === 'PJ') ? 'block' : 'none';
+}
+
+// Auto-preenchimento ViaCEP (CORRIGIDO: usa openModalMessage)
+cepInput.addEventListener('blur', async (e) => {
+    const cep = e.target.value.replace(/\D/g, ''); 
+    if (cep.length !== 8) return;
+    
     try {
-        await db.collection('clients').add({
-            userId: currentUserId,
-            name: document.getElementById('client-name').value,
-            email: document.getElementById('client-email').value,
-            phone: document.getElementById('client-phone').value,
-            notes: document.getElementById('client-notes').value,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        formAddClient.reset();
-        closeModal('modal-add-client');
-        loadClients(); // Recarrega a lista
-        loadClientsForSelect(); // Atualiza o cache
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        if (!response.ok) throw new Error('CEP não encontrado');
+        const data = await response.json();
+        
+        if (data.erro) {
+            openModalMessage('CEP não encontrado.', 'Erro de CEP');
+            return;
+        }
+        
+        formAddClient.querySelector('#client-address').value = data.logradouro;
+        formAddClient.querySelector('#client-neighborhood').value = data.bairro;
+        formAddClient.querySelector('#client-city').value = data.localidade;
+        formAddClient.querySelector('#client-state').value = data.uf;
+        formAddClient.querySelector('#client-number').focus();
     } catch (error) {
-        console.error("Erro ao adicionar cliente: ", error);
-        alert("Não foi possível salvar o cliente.");
+        console.error("Erro ao buscar CEP:", error);
+        openModalMessage('Não foi possível buscar o CEP. Verifique sua conexão.', 'Erro de Rede');
     }
 });
 
-// Carregar Clientes (novo HTML)
+// Adicionar/Atualizar Cliente
+formAddClient.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentUserId) return;
+    
+    const clientId = editingClientId.value;
+    const clientType = clientTypeSelect.value;
+
+    let clientData = {
+        userId: currentUserId,
+        type: clientType,
+        email: formAddClient.querySelector('#client-email').value,
+        phone: formAddClient.querySelector('#client-phone').value,
+        cep: formAddClient.querySelector('#client-cep').value,
+        address: formAddClient.querySelector('#client-address').value,
+        number: formAddClient.querySelector('#client-number').value,
+        neighborhood: formAddClient.querySelector('#client-neighborhood').value,
+        city: formAddClient.querySelector('#client-city').value,
+        state: formAddClient.querySelector('#client-state').value,
+    };
+
+    if (clientType === 'PF') {
+        clientData = { ...clientData,
+            name: formAddClient.querySelector('#client-name-pf').value,
+            cpf: formAddClient.querySelector('#client-cpf').value,
+            rg: formAddClient.querySelector('#client-rg').value,
+            dob: formAddClient.querySelector('#client-dob').value,
+        };
+    } else { // PJ
+        clientData = { ...clientData,
+            name: formAddClient.querySelector('#client-razaoSocial').value, // 'name' será a Razão Social
+            razaoSocial: formAddClient.querySelector('#client-razaoSocial').value,
+            cnpj: formAddClient.querySelector('#client-cnpj').value,
+            contactName: formAddClient.querySelector('#client-contactName-pj').value,
+        };
+    }
+
+    try {
+        btnSaveClient.disabled = true;
+        if (clientId) {
+            btnSaveClient.textContent = 'Atualizando...';
+            await db.collection('clients').doc(clientId).update(clientData);
+        } else {
+            btnSaveClient.textContent = 'Salvando...';
+            await db.collection('clients').add({
+                ...clientData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        formAddClient.reset();
+        closeModal('modal-add-client');
+        loadClients();
+        loadClientsForSelect();
+        
+    } catch (error) {
+        console.error("Erro ao salvar cliente: ", error);
+        openModalMessage("Erro ao salvar cliente. Verifique o console.", "Erro");
+    } finally {
+        btnSaveClient.disabled = false;
+        btnSaveClient.textContent = 'Salvar Cliente';
+    }
+});
+
+// Carregar Clientes (Lista)
 async function loadClients() {
     if (!currentUserId) return;
     clientsList.innerHTML = '<p>Carregando clientes...</p>';
@@ -272,171 +395,270 @@ async function loadClients() {
     if (snapshot.empty) {
         clientsList.innerHTML = '<p>Nenhum cliente cadastrado.</p>'; return;
     }
-
-    clientsList.innerHTML = ''; // Limpa a lista
+    clientsList.innerHTML = '';
     snapshot.forEach(doc => {
         const client = doc.data();
+        const displayName = client.name || client.razaoSocial;
+        const displaySub = client.type === 'PF' ? (client.email || 'Sem email') : (`Contato: ${client.contactName}` || 'Sem contato');
+
         clientsList.innerHTML += `
             <div class="list-item" data-id="${doc.id}">
                 <div class="list-item-info">
-                    <h4>${client.name}</h4>
-                    <p>${client.email || 'Sem email'} | ${client.phone || 'Sem telefone'}</p>
+                    <h4>${displayName}</h4>
+                    <p>${displaySub}</p>
                 </div>
                 <div class="list-item-actions">
-                    <button class="details-btn" data-notes="${client.notes || ''}">Detalhes</button>
-                    <button class="delete-btn" data-collection="clients" data-id="${doc.id}">Excluir</button>
+                    <button class="details-btn" data-id="${doc.id}">Detalhes</button>
+                    <button class="delete-btn" data-id="${doc.id}" data-name="${displayName}" data-collection="clients">Excluir</button>
                 </div>
             </div>
         `;
     });
 }
 
-// Filtro de Clientes (Novo)
+// Filtro de Clientes
 searchClient.addEventListener('input', (e) => {
     const searchTerm = e.target.value.toLowerCase();
     const items = clientsList.querySelectorAll('.list-item');
     items.forEach(item => {
         const name = item.querySelector('h4').textContent.toLowerCase();
-        if (name.includes(searchTerm)) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
+        item.style.display = name.includes(searchTerm) ? 'flex' : 'none';
     });
 });
 
-// Ações da Lista de Clientes (Detalhes e Deletar)
+// Ações da Lista de Clientes (Abrir Detalhes ou Modal de Exclusão)
 clientsList.addEventListener('click', (e) => {
-    if (e.target.classList.contains('details-btn')) {
-        const notes = e.target.dataset.notes;
-        alert(notes || "Nenhuma anotação para este cliente.");
+    const target = e.target;
+    if (target.classList.contains('details-btn')) {
+        openClientDetailsModal(target.dataset.id);
     }
-    // O de deletar é pego pelo listener global
+    if (target.classList.contains('delete-btn')) {
+        openDeleteConfirmModal(
+            target.dataset.id,
+            target.dataset.name,
+            target.dataset.collection
+        );
+    }
 });
 
+// Abrir Modal de Detalhes do Cliente
+async function openClientDetailsModal(clientId) {
+    detailsClientContent.innerHTML = '<p>Carregando...</p>';
+    openModal('modal-client-details');
+    
+    // 1. Buscar Dados do Cliente
+    const clientDoc = await db.collection('clients').doc(clientId).get();
+    if (!clientDoc.exists) {
+        detailsClientContent.innerHTML = '<p>Cliente não encontrado.</p>'; return;
+    }
+    const client = clientDoc.data();
+    detailsClientName.textContent = client.name || client.razaoSocial;
+    
+    // 2. Buscar Eventos
+    const eventsQuery = await db.collection('events')
+        .where('userId', '==', currentUserId)
+        .where('clientId', '==', clientId)
+        .orderBy('start', 'desc').get();
+    
+    // 3. Buscar Pagamentos
+    const transactionsQuery = await db.collection('transactions')
+        .where('userId', '==', currentUserId)
+        .where('clientId', '==', clientId) 
+        .orderBy('date', 'desc').get();
 
-// Carregar Clientes para Select (igual v1)
+    // 4. Montar HTML do Relatório
+    let detailsHtml = `
+        <div class="client-details-container">
+            <div class="client-details-section">
+                <h3>Dados Cadastrais</h3>
+                ${generateClientDataHtml(client)}
+            </div>
+            <div class="client-details-section">
+                <h3>Eventos Agendados (${eventsQuery.size})</h3>
+                <div class="details-list">
+                    ${eventsQuery.empty ? '<p>Nenhum evento encontrado.</p>' : 
+                        eventsQuery.docs.map(doc => {
+                            const event = doc.data();
+                            return `<div class="list-item"><strong>${event.title}</strong> (${formatFirebaseTimestamp(event.start)})</div>`;
+                        }).join('')
+                    }
+                </div>
+            </div>
+            <div class="client-details-section">
+                <h3>Financeiro</h3>
+                <div class="details-list">
+                    ${transactionsQuery.empty ? '<p>Nenhuma transação encontrada.</p>' : 
+                        transactionsQuery.docs.map(doc => {
+                            const trans = doc.data();
+                            const amountClass = trans.type === 'income' ? 'income' : 'expense';
+                            return `<div class="list-item">
+                                ${trans.description} 
+                                (<span class="amount ${amountClass}">${formatCurrency(trans.amount)}</span>) 
+                                - Status: ${trans.status}
+                            </div>`;
+                        }).join('')
+                    }
+                </div>
+            </div>
+            <div class="client-details-section">
+                <h3>Contratos</h3>
+                <div class="details-list"><p>Nenhum contrato encontrado.</p></div>
+            </div>
+        </div>
+    `;
+    
+    detailsClientContent.innerHTML = detailsHtml;
+    
+    // 5. Adicionar Ações aos Botões do Footer
+    btnEditClient.onclick = () => {
+        closeModal('modal-client-details');
+        openEditClientModal(clientId, client);
+    };
+    btnDeleteClient.onclick = () => {
+        openDeleteConfirmModal(clientId, client.name || client.razaoSocial, 'clients');
+    };
+}
+
+// Helper para gerar o HTML dos dados
+function generateClientDataHtml(client) {
+    let html = '<div class="details-grid">';
+    if (client.type === 'PJ') {
+        html += `<div class="details-item" style="grid-column: 1 / 3;"><strong>Razão Social</strong> ${client.razaoSocial || 'N/A'}</div>`;
+        html += `<div class="details-item"><strong>CNPJ</strong> ${client.cnpj || 'N/A'}</div>`;
+        html += `<div class="details-item"><strong>Contato</strong> ${client.contactName || 'N/A'}</div>`;
+    } else { // PF
+        html += `<div class="details-item" style="grid-column: 1 / 3;"><strong>Nome Completo</strong> ${client.name || 'N/A'}</div>`;
+        html += `<div class="details-item"><strong>CPF</strong> ${client.cpf || 'N/A'}</div>`;
+        html += `<div class="details-item"><strong>RG</strong> ${client.rg || 'N/A'}</div>`;
+    }
+    html += `<div class="details-item"><strong>Email</strong> ${client.email || 'N/A'}</div>`;
+    html += `<div class="details-item"><strong>Telefone</strong> ${client.phone || 'N/A'}</div>`;
+    html += `<div class="details-item" style="grid-column: 1 / 3;"><strong>Endereço</strong> ${client.address || ''}, ${client.number || ''}</div>`;
+    html += `<div class="details-item"><strong>Bairro</strong> ${client.neighborhood || 'N/A'}</div>`;
+    html += `<div class="details-item"><strong>Cidade / UF</strong> ${client.city || ''} / ${client.state || ''}</div>`;
+    html += '</div>';
+    return html;
+}
+
+// Abrir Modal de Edição
+function openEditClientModal(clientId, client) {
+    formAddClient.reset();
+    editingClientId.value = clientId;
+    modalClientTitle.textContent = 'Editar Cliente';
+    btnSaveClient.textContent = 'Atualizar Cliente';
+    
+    // Preenche os campos
+    clientTypeSelect.value = client.type;
+    toggleClientFields(client.type);
+    
+    // Comuns
+    formAddClient.querySelector('#client-email').value = client.email || '';
+    formAddClient.querySelector('#client-phone').value = client.phone || '';
+    formAddClient.querySelector('#client-cep').value = client.cep || '';
+    formAddClient.querySelector('#client-address').value = client.address || '';
+    formAddClient.querySelector('#client-number').value = client.number || '';
+    formAddClient.querySelector('#client-neighborhood').value = client.neighborhood || '';
+    formAddClient.querySelector('#client-city').value = client.city || '';
+    formAddClient.querySelector('#client-state').value = client.state || '';
+    
+    if (client.type === 'PF') {
+        formAddClient.querySelector('#client-name-pf').value = client.name || '';
+        formAddClient.querySelector('#client-cpf').value = client.cpf || '';
+        formAddClient.querySelector('#client-rg').value = client.rg || '';
+        formAddClient.querySelector('#client-dob').value = client.dob || '';
+    } else { // PJ
+        formAddClient.querySelector('#client-razaoSocial').value = client.razaoSocial || '';
+        formAddClient.querySelector('#client-cnpj').value = client.cnpj || '';
+        formAddClient.querySelector('#client-contactName-pj').value = client.contactName || '';
+    }
+    
+    openModal('modal-add-client');
+}
+
+// Carregar Clientes para Select
 async function loadClientsForSelect() {
     if (!currentUserId) return;
-    const snapshot = await db.collection('clients')
-        .where('userId', '==', currentUserId)
-        .orderBy('name', 'asc').get();
-    
+    const snapshot = await db.collection('clients').where('userId', '==', currentUserId).orderBy('name', 'asc').get();
     clientCache = [];
+    
+    const eventClientSelect = document.getElementById('event-client-select');
+    const transClientSelect = document.getElementById('trans-client-select');
+    
     eventClientSelect.innerHTML = '<option value="">Selecione...</option>';
+    if (transClientSelect) transClientSelect.innerHTML = '<option value="">(Opcional) Vincular a cliente...</option>';
     
     snapshot.forEach(doc => {
         const client = { id: doc.id, ...doc.data() };
         clientCache.push(client);
-        eventClientSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
+        const displayName = client.name || client.razaoSocial;
+        eventClientSelect.innerHTML += `<option value="${client.id}">${displayName}</option>`;
+        if (transClientSelect) transClientSelect.innerHTML += `<option value="${client.id}">${displayName}</option>`;
     });
 }
 
-// --- 7. MÓDULO: AGENDA (Totalmente Novo com FullCalendar) ---
 
+// --- 7. MÓDULO: AGENDA (100% Modais) ---
 function initializeCalendar() {
-    if (isCalendarInitialized) {
-        calendar.refetchEvents(); // Apenas atualiza se já foi criado
-        return;
-    }
-
+    if (isCalendarInitialized) { calendar.refetchEvents(); return; }
     calendar = new FullCalendar.Calendar(calendarEl, {
-        locale: 'pt-br',
-        initialView: 'dayGridMonth',
-        headerToolbar: false, // Usamos nossos próprios botões
-        events: fetchEventsFromFirebase, // Função que busca no Firebase
-        editable: true, // Permite arrastar eventos (requer lógica de update)
-        selectable: true,
-        // Ao clicar em um dia, abre o modal de novo evento
+        locale: 'pt-br', initialView: 'dayGridMonth', headerToolbar: false, 
+        events: fetchEventsFromFirebase, editable: true, selectable: true,
         select: function(info) {
             openModal('modal-add-event');
             document.getElementById('event-start').value = info.startStr.substring(0, 16);
             document.getElementById('event-end').value = info.endStr.substring(0, 16);
         },
-        // Ao clicar em um evento existente
+        // CORRIGIDO: usa openModalMessage
         eventClick: function(info) {
-            alert(`Evento: ${info.event.title}\nStatus: ${info.event.extendedProps.status}`);
-            // Aqui você pode abrir um modal de "editar evento"
+            const client = clientCache.find(c => c.id === info.event.extendedProps.clientId);
+            const clientName = client ? (client.name || client.razaoSocial) : 'N/A';
+            openModalMessage(
+                `<strong>Cliente:</strong> ${clientName}<br><strong>Status:</strong> ${info.event.extendedProps.status}`,
+                `Evento: ${info.event.title}`
+            );
         },
-        // Ao arrastar e soltar um evento
+        // CORRIGIDO: usa openModalConfirm
         eventDrop: async function(info) {
-            if (!confirm("Salvar nova data para este evento?")) {
-                info.revert();
-            } else {
+            openModalConfirm("Salvar nova data para este evento?", async () => {
                 try {
                     await db.collection('events').doc(info.event.id).update({
-                        start: info.event.start,
-                        end: info.event.end
+                        start: info.event.start, end: info.event.end
                     });
-                } catch(err) {
-                    console.error("Erro ao atualizar evento: ", err);
-                    info.revert();
+                } catch(err) { 
+                    console.error("Erro: ", err); 
+                    openModalMessage('Erro ao atualizar data.', 'Erro');
+                    info.revert(); 
                 }
-            }
+            }, () => info.revert()); // Callback de Cancelar
         }
     });
-
-    calendar.render();
-    isCalendarInitialized = true;
+    calendar.render(); isCalendarInitialized = true;
 }
 
-// Função para o FullCalendar buscar eventos
 async function fetchEventsFromFirebase(fetchInfo, successCallback, failureCallback) {
-    if (!currentUserId) {
-        failureCallback("Usuário não logado");
-        return;
-    }
-    
+    if (!currentUserId) { failureCallback("Usuário não logado"); return; }
     try {
-        const snapshot = await db.collection('events')
-            .where('userId', '==', currentUserId)
-            // Filtra por data (opcional, mas bom para performance)
-            .where('start', '>=', fetchInfo.start)
-            .where('start', '<=', fetchInfo.end)
-            .get();
-        
+        const snapshot = await db.collection('events').where('userId', '==', currentUserId).where('start', '>=', fetchInfo.start).where('start', '<=', fetchInfo.end).get();
         const events = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
-                id: doc.id,
-                title: data.title,
-                start: data.start.toDate(),
-                end: data.end.toDate(),
-                status: data.status // Propriedade extendida
+                id: doc.id, title: data.title, start: data.start.toDate(), end: data.end.toDate(),
+                status: data.status, clientId: data.clientId 
             };
         });
-        
         successCallback(events);
-    } catch (error) {
-        console.error("Erro ao buscar eventos: ", error);
-        failureCallback(error);
-    }
+    } catch (error) { console.error("Erro: ", error); failureCallback(error); }
 }
-
-// Botões de Mudar Visualização da Agenda
-btnViewMonth.addEventListener('click', () => {
-    calendar.changeView('dayGridMonth');
-    updateViewButtons('month');
-});
-btnViewWeek.addEventListener('click', () => {
-    calendar.changeView('timeGridWeek');
-    updateViewButtons('week');
-});
-btnViewList.addEventListener('click', () => {
-    calendar.changeView('listYear'); // Lista dos próximos 12 meses
-    updateViewButtons('list');
-});
+btnViewMonth.addEventListener('click', () => { calendar.changeView('dayGridMonth'); updateViewButtons('month'); });
+btnViewWeek.addEventListener('click', () => { calendar.changeView('timeGridWeek'); updateViewButtons('week'); });
+btnViewList.addEventListener('click', () => { calendar.changeView('listYear'); updateViewButtons('list'); });
 function updateViewButtons(activeView) {
     btnViewMonth.classList.toggle('active', activeView === 'month');
     btnViewWeek.classList.toggle('active', activeView === 'week');
     btnViewList.classList.toggle('active', activeView === 'list');
 }
-
-// Adicionar Evento (pelo modal)
 formAddEvent.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentUserId) return;
-
+    e.preventDefault(); if (!currentUserId) return;
     try {
         await db.collection('events').add({
             userId: currentUserId,
@@ -448,22 +670,18 @@ formAddEvent.addEventListener('submit', async (e) => {
             status: document.getElementById('event-status').value,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        formAddEvent.reset();
-        closeModal('modal-add-event');
-        calendar.refetchEvents(); // Atualiza o calendário
-    } catch (error) {
-        console.error("Erro ao adicionar evento: ", error);
-        alert("Não foi possível salvar o evento.");
-    }
+        formAddEvent.reset(); closeModal('modal-add-event');
+        calendar.refetchEvents();
+    } catch (error) { console.error("Erro: ", error); openModalMessage("Não foi possível salvar o evento.", "Erro"); }
 });
 
 
-// --- 8. MÓDULO: FINANCEIRO (Igual à v1, mas com novo seletor) ---
-// (Omitido por brevidade, use o da v1)
+// --- 8. MÓDULO: FINANCEIRO (100% Modais) ---
 formAddTransaction.addEventListener('submit', async (e) => {
     e.preventDefault(); if (!currentUserId) return;
+    const clientId = document.getElementById('trans-client-select') ? document.getElementById('trans-client-select').value : '';
     try {
-        await db.collection('transactions').add({
+        const transData = {
             userId: currentUserId,
             description: document.getElementById('trans-description').value,
             amount: parseFloat(document.getElementById('trans-amount').value),
@@ -471,9 +689,12 @@ formAddTransaction.addEventListener('submit', async (e) => {
             date: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('trans-date').value)),
             status: document.getElementById('trans-status').value,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        if (clientId) { transData.clientId = clientId; }
+        
+        await db.collection('transactions').add(transData);
         formAddTransaction.reset(); loadTransactions();
-    } catch (error) { console.error("Erro: ", error); alert("Não foi possível salvar."); }
+    } catch (error) { console.error("Erro: ", error); openModalMessage("Não foi possível salvar a transação.", "Erro"); }
 });
 async function loadTransactions() {
     if (!currentUserId) return; transactionsList.innerHTML = '<p>Carregando...</p>';
@@ -482,24 +703,27 @@ async function loadTransactions() {
     transactionsList.innerHTML = '';
     snapshot.forEach(doc => {
         const trans = doc.data();
+        const client = clientCache.find(c => c.id === trans.clientId);
+        const clientName = client ? (client.name || client.razaoSocial) : 'Sem cliente';
+        
         const amountClass = trans.type === 'income' ? 'income' : 'expense';
         transactionsList.innerHTML += `
             <div class="list-item" data-id="${doc.id}">
                 <div class="list-item-info">
                     <h4>${trans.description}</h4>
                     <p class="amount ${amountClass}">${formatCurrency(trans.amount)}</p>
+                    <p>Cliente: ${clientName}</p>
                     <p>Data: ${formatFirebaseTimestamp(trans.date, { dateOnly: true })} | Status: ${trans.status}</p>
                 </div>
                 <div class="list-item-actions">
-                    <button class="delete-btn" data-collection="transactions" data-id="${doc.id}">Excluir</button>
+                    <button class="delete-btn" data-id="${doc.id}" data-name="${trans.description}" data-collection="transactions">Excluir</button>
                 </div>
             </div>`;
     });
 }
 
 
-// --- 9. MÓDULO: CONFIGURAÇÕES (Igual à v1) ---
-// (Omitido por brevidade, use o da v1)
+// --- 9. MÓDULO: CONFIGURAÇÕES (100% Modais) ---
 async function loadSettings() {
     if (!currentUserId) return;
     const userDoc = await db.collection('users').doc(currentUserId).get();
@@ -510,31 +734,65 @@ formSettings.addEventListener('submit', async (e) => {
     const newName = document.getElementById('config-name').value;
     try {
         await db.collection('users').doc(currentUserId).update({ businessName: newName });
-        alert('Configurações salvas!');
+        openModalMessage('Configurações salvas com sucesso!'); // CORRIGIDO
         userBusinessName.textContent = newName;
-    } catch (error) { console.error("Erro: ", error); alert('Não foi possível salvar.'); }
+    } catch (error) { console.error("Erro: ", error); openModalMessage('Não foi possível salvar.', 'Erro'); }
 });
 
 
-// --- 10. AÇÕES GLOBAIS (Deletar) ---
+// --- 10. AÇÕES GLOBAIS (Deletar com Modal) ---
+// Função para abrir o modal de confirmação DE EXCLUSÃO
+function openDeleteConfirmModal(id, name, collection) {
+    deleteItemName.textContent = `"${name}"`;
+    deleteItemId.value = id;
+    deleteItemCollection.value = collection;
+    openModal('modal-confirm-delete');
+}
+
+// Listener global para pegar cliques de deletar
 appContainer.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('delete-btn')) {
-        const id = e.target.dataset.id;
-        const collection = e.target.dataset.collection;
-        if (!id || !collection) return;
-        if (confirm(`Tem certeza que deseja excluir este item?`)) {
-            try {
-                await db.collection(collection).doc(id).delete();
-                e.target.closest('.list-item').remove();
-                if (collection === 'clients') { loadClientsForSelect(); }
-                if (collection === 'events') { calendar.refetchEvents(); }
-            } catch (error) { alert("Não foi possível excluir."); }
+    const target = e.target.closest('.delete-btn'); // Mais seguro
+    if (target) {
+        const id = target.dataset.id;
+        const name = target.dataset.name;
+        const collection = target.dataset.collection;
+        if (id && name && collection) {
+            openDeleteConfirmModal(id, name, collection);
         }
     }
 });
 
-// --- 11. FUNÇÕES UTILITÁRIAS (Iguais à v1) ---
-// (Omitidas por brevidade, use as da v1)
+// Ação de Deletar (botão "Sim, Excluir")
+btnConfirmDeleteAction.addEventListener('click', async () => {
+    const id = deleteItemId.value;
+    const collection = deleteItemCollection.value;
+    if (!id || !collection) return;
+    
+    try {
+        btnConfirmDeleteAction.disabled = true;
+        btnConfirmDeleteAction.textContent = "Excluindo...";
+        
+        await db.collection(collection).doc(id).delete();
+        
+        closeModal('modal-confirm-delete');
+        closeModal('modal-client-details'); 
+        
+        // Recarrega a lista relevante
+        if (collection === 'clients') { loadClients(); loadClientsForSelect(); }
+        else if (collection === 'events') { calendar.refetchEvents(); }
+        else if (collection === 'transactions') { loadTransactions(); }
+        
+    } catch (error) {
+        console.error("Erro ao deletar: ", error);
+        openModalMessage("Não foi possível excluir o item.", "Erro");
+    } finally {
+        btnConfirmDeleteAction.disabled = false;
+        btnConfirmDeleteAction.textContent = "Sim, Excluir";
+    }
+});
+
+
+// --- 11. FUNÇÕES UTILITÁRIAS (Helpers) ---
 function getFirebaseAuthErrorMessage(error) {
     switch (error.code) {
         case 'auth/user-not-found': case 'auth/wrong-password': return 'Email ou senha incorretos.';

@@ -1,4 +1,4 @@
-/* style.css (Versão 2) */
+/* style.css (Versão 3.1) */
 :root {
     /* Paleta de Cores (Cinza Claro) */
     --cor-fundo: #f4f5f7;
@@ -243,6 +243,7 @@ button:hover { opacity: 0.85; }
     background-color: rgba(0, 0, 0, 0.4);
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
 .modal.active {
     display: flex;
@@ -251,7 +252,7 @@ button:hover { opacity: 0.85; }
     background-color: var(--cor-container);
     border-radius: 12px;
     box-shadow: var(--sombra-modal);
-    width: 90%;
+    width: 100%;
     max-width: 500px;
     overflow: hidden;
     animation: slideIn 0.3s ease;
@@ -275,10 +276,44 @@ button:hover { opacity: 0.85; }
 }
 .modal-body {
     padding: 25px;
+    max-height: 70vh; /* Limite de altura */
+    overflow-y: auto;   /* Scroll vertical */
 }
 .modal-body form button {
     width: 100%;
     margin-top: 10px;
+}
+
+/* Footer do Modal (para botões de ação) */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px 25px;
+    border-top: 1px solid var(--cor-borda);
+    background-color: #f9f9f9;
+}
+button.btn-secondary {
+    background-color: var(--cor-container);
+    color: var(--cor-texto-secundario);
+    border: 1px solid var(--cor-borda);
+}
+button.btn-danger {
+    background-color: var(--cor-erro);
+}
+
+/* Divisor do formulário */
+.form-divider {
+    border: none;
+    border-top: 1px solid var(--cor-borda);
+    margin: 20px 0;
+}
+
+/* Grid para formulário de endereço */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
 }
 
 /* --- Página: Clientes (Lista) --- */
@@ -289,8 +324,12 @@ button:hover { opacity: 0.85; }
     padding: 15px 0;
     border-bottom: 1px solid var(--cor-fundo);
 }
-.data-list .list-item:last-child {
+.data-list.card .list-item:first-child {
+    padding-top: 0;
+}
+.data-list.card .list-item:last-child {
     border-bottom: none;
+    padding-bottom: 0;
 }
 .list-item-info h4 {
     font-size: 1.1em;
@@ -322,20 +361,14 @@ button:hover { opacity: 0.85; }
     padding: 20px;
 }
 /* Ajustes do FullCalendar */
-.fc {
-    font-size: 0.95em;
-}
+.fc { font-size: 0.95em; }
 .fc-event { /* Eventos no calendário */
     background-color: var(--cor-primaria) !important;
     border: 1px solid var(--cor-primaria) !important;
     cursor: pointer;
 }
-.fc-toolbar-title {
-    font-size: 1.5em !important;
-}
-.fc-daygrid-day-number {
-    color: var(--cor-texto-secundario);
-}
+.fc-toolbar-title { font-size: 1.5em !important; }
+.fc-daygrid-day-number { color: var(--cor-texto-secundario); }
 .view-switcher .view-btn {
     background-color: var(--cor-fundo);
     color: var(--cor-texto-secundario);
@@ -379,4 +412,79 @@ button:hover { opacity: 0.85; }
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
+    /* Grid de forms no mobile */
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-grid input {
+        grid-column: auto !important;
+    }
+}
+
+/* ================================================= */
+/* CSS Adicional para Modais e Formulários (v3)      */
+/* ================================================= */
+
+/* Torna os modais maiores e com scroll */
+.modal-content.modal-lg {
+    max-width: 800px;
+}
+
+/* --- Estilos para Relatório do Cliente (Modal Detalhes) --- */
+.client-details-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+.client-details-section {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cor-borda);
+}
+.client-details-section:last-child {
+    border-bottom: none;
+}
+.client-details-section h3 {
+    font-size: 1.2em;
+    color: var(--cor-primaria);
+    margin-bottom: 15px;
+}
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.details-item {
+    font-size: 0.95em;
+}
+.details-item strong {
+    display: block;
+    font-size: 0.8em;
+    color: var(--cor-texto-secundario);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+.details-list .list-item {
+    padding: 10px;
+    border-radius: 6px;
+    background-color: var(--cor-fundo);
+    margin-bottom: 8px;
+}
+.details-list .list-item:last-child {
+    margin-bottom: 0;
+}
+/* Específico do Financeiro no relatório */
+.amount.income { color: var(--cor-receita); font-weight: 600; }
+.amount.expense { color: var(--cor-despesa); font-weight: 600; }
+
+/* Estilo para modais genéricos (alert/confirm) */
+#modal-message .modal-content,
+#modal-confirm-generic .modal-content {
+    max-width: 450px;
+}
+
+#modal-message-text,
+#modal-confirm-generic-text {
+    font-size: 1.05em;
+    line-height: 1.6;
 }
