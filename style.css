@@ -1,0 +1,261 @@
+/* style.css */
+:root {
+    /* Paleta de Cores (Cinza Claro) */
+    --cor-fundo: #f4f5f7;
+    --cor-container: #ffffff;
+    --cor-borda: #e0e0e0;
+    --cor-texto-principal: #333333;
+    --cor-texto-secundario: #777777;
+    --cor-primaria: #007aff; /* Azul para ações (pode ser trocado no futuro) */
+    --cor-erro: #d93025;
+    --cor-receita: #28a745;
+    --cor-despesa: #dc3545;
+
+    --sombra: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Reset Básico e Fontes --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto-principal);
+    font-size: 16px;
+}
+
+/* --- TELA DE AUTENTICAÇÃO --- */
+#auth-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.auth-box {
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--cor-container);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    text-align: center;
+}
+.auth-box h2 {
+    margin-bottom: 10px;
+    font-size: 1.8em;
+}
+.auth-box p {
+    margin-bottom: 25px;
+    color: var(--cor-texto-secundario);
+}
+.auth-switch {
+    font-size: 0.9em;
+    margin-top: 20px;
+}
+.auth-switch a {
+    color: var(--cor-primaria);
+    text-decoration: none;
+    font-weight: 600;
+}
+.error-message {
+    color: var(--cor-erro);
+    font-size: 0.9em;
+    margin-top: 15px;
+    min-height: 1.2em;
+}
+
+/* --- LAYOUT PRINCIPAL DA APP --- */
+#app-container {
+    display: none; /* O JS vai mostrar isso */
+    padding-bottom: 80px; /* Espaço para o menu de navegação fixo */
+    padding-top: 70px; /* Espaço para o header fixo */
+}
+
+.app-header {
+    background-color: var(--cor-container);
+    border-bottom: 1px solid var(--cor-borda);
+    padding: 0 20px;
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+.app-header h1 {
+    font-size: 1.5em;
+}
+#btn-logout {
+    background: none;
+    border: none;
+    font-size: 1.5em; /* Emoji size */
+    cursor: pointer;
+    color: var(--cor-texto-secundario);
+}
+
+/* --- NAVEGAÇÃO (Mobile Bottom Bar) --- */
+.app-nav {
+    background-color: var(--cor-container);
+    border-top: 1px solid var(--cor-borda);
+    display: flex;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: var(--cor-texto-secundario);
+    font-size: 1.8em; /* Tamanho dos emojis */
+    cursor: pointer;
+    flex: 1;
+    padding: 15px 0;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.nav-btn.active {
+    color: var(--cor-primaria);
+    background-color: #f4f4f7; /* Um leve destaque */
+}
+
+/* --- CONTEÚDO DAS PÁGINAS --- */
+#app-content {
+    padding: 20px;
+}
+
+.page {
+    display: none; /* JS controla a visibilidade */
+    animation: fadeIn 0.3s ease-in-out;
+}
+.page.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- COMPONENTES GERAIS (Inputs, Botões, Cards) --- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+textarea,
+select,
+.search-bar {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 15px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    background-color: var(--cor-fundo);
+    font-size: 1em;
+    color: var(--cor-texto-principal);
+}
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+label {
+    display: block;
+    font-size: 0.9em;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: var(--cor-texto-secundario);
+}
+
+button {
+    background-color: var(--cor-primaria);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+button:hover {
+    opacity: 0.9;
+}
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.card {
+    background-color: var(--cor-container);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: var(--sombra);
+}
+.form-container h3, .data-list h3 {
+    margin-bottom: 20px;
+}
+
+/* --- Listas de Dados --- */
+.data-list .list-item {
+    background-color: var(--cor-container);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--cor-borda);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.list-item-info h4 {
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    color: var(--cor-texto-principal);
+}
+.list-item-info p {
+    font-size: 0.9em;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 3px;
+}
+.list-item-actions .delete-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    color: var(--cor-erro);
+    cursor: pointer;
+    width: auto;
+    padding: 5px;
+}
+
+/* Específico do Financeiro */
+.list-item-info .amount.income {
+    color: var(--cor-receita);
+    font-weight: 600;
+}
+.list-item-info .amount.expense {
+    color: var(--cor-despesa);
+    font-weight: 600;
+}
+
+/* Dashboard */
+.summary-list p {
+    color: var(--cor-texto-secundario);
+    font-size: 0.9em;
+}
