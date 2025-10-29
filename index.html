@@ -4,26 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FotoCRM</title>
-    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="style.css">    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
+    
+    <script src="https://unpkg.com/lucide-react@0.378.0/dist/umd/lucide.min.js"></script>
+    
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
 </head>
 <body>
 
     <div id="auth-container" class="page active">
         <div class="auth-box">
             <h2>FotoCRM</h2>
-            
             <div id="login-form">
-                <p>Acesse seu estúdio 1.2</p>
+                <p>Acesse seu estúdio</p>
                 <input type="email" id="login-email" placeholder="Email" required>
                 <input type="password" id="login-password" placeholder="Senha" required>
                 <button id="btn-login">Entrar</button>
                 <p class="auth-switch">Não tem conta? <a href="#" id="show-signup">Cadastre-se</a></p>
                 <p id="auth-error" class="error-message"></p>
-          </div>
-
+            </div>
             <div id="signup-form" style="display: none;">
                 <p>Crie sua conta</p>
                 <input type="text" id="signup-name" placeholder="Nome do seu Estúdio" required>
@@ -37,123 +41,185 @@
 
     <div id="app-container" style="display: none;">
         
-        <header class="app-header">
-            <h1 id="page-title">Inicial</h1>
-            <button id="btn-logout" title="Sair">Sair</button>
-        </header>
-
-        <main id="app-content">
-            
-            <section id="page-inicial" class="page">
-                <h2>Bem-vindo(a), <span id="user-business-name"></span>!</h2>
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <h3>Próximos Eventos</h3>
-                        <div id="summary-eventos" class="summary-list">
-                            <p>Carregando...</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>Pagamentos Pendentes</h3>
-                        <div id="summary-financeiro" class="summary-list">
-                            <p>Carregando...</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="page-clientes" class="page">
-                <div class="form-container card">
-                    <h3>Novo Cliente</h3>
-                    <form id="form-add-client">
-                        <input type="text" id="client-name" placeholder="Nome completo" required>
-                        <input type="email" id="client-email" placeholder="Email">
-                        <input type="tel" id="client-phone" placeholder="Telefone (ex: 11987654321)">
-                        <textarea id="client-notes" placeholder="Anotações sobre o cliente..."></textarea>
-                        <button type="submit">Salvar Cliente</button>
-                    </form>
-                </div>
-                <h3>Meus Clientes</h3>
-                <input type="text" id="search-client" placeholder="Buscar cliente..." class="search-bar">
-                <div id="clients-list" class="data-list">
-                    </div>
-            </section>
-
-            <section id="page-agenda" class="page">
-                <div class="form-container card">
-                    <h3>Novo Evento</h3>
-                    <form id="form-add-event">
-                        <input type="text" id="event-title" placeholder="Título (ex: Casamento João e Maria)" required>
-                        <label for="event-client-select">Cliente</label>
-                        <select id="event-client-select" required>
-                            <option value="">Selecione um cliente...</option>
-                        </select>
-                        <label for="event-start">Início</label>
-                        <input type="datetime-local" id="event-start" required>
-                        <label for="event-end">Término</label>
-                        <input type="datetime-local" id="event-end" required>
-                        <input type="text" id="event-location" placeholder="Local do evento">
-                        <select id="event-status" required>
-                            <option value="pending">Pendente</option>
-                            <option value="confirmed">Confirmado</option>
-                            <option value="completed">Concluído</option>
-                        </select>
-                        <button type="submit">Salvar Evento</button>
-                    </form>
-                </div>
-                <h3>Próximos Eventos</h3>
-                <div id="events-list" class="data-list">
-                    </div>
-            </section>
-
-            <section id="page-financeiro" class="page">
-                <div class="form-container card">
-                    <h3>Nova Transação</h3>
-                    <form id="form-add-transaction">
-                        <input type="text" id="trans-description" placeholder="Descrição (ex: Entrada Sessão Família)" required>
-                        <input type="number" id="trans-amount" placeholder="Valor (ex: 500.00)" step="0.01" required>
-                        <select id="trans-type" required>
-                            <option value="income">Receita (Entrada)</option>
-                            <option value="expense">Despesa (Saída)</option>
-                        </select>
-                        <label for="trans-date">Data</label>
-                        <input type="date" id="trans-date" required>
-                         <select id="trans-status" required>
-                            <option value="pending">Pendente</option>
-                            <option value="paid">Pago</option>
-                        </select>
-                        <button type="submit">Salvar Transação</button>
-                    </form>
-                </div>
-                <h3>Histórico Financeiro</h3>
-                <div id="transactions-list" class="data-list">
-                    </div>
-            </section>
-
-            <section id="page-configuracoes" class="page">
-                <h3>Configurações da Conta</h3>
-                <div class="form-container card">
-                    <form id="form-settings">
-                        <label for="config-name">Nome do Estúdio / Fotógrafo</label>
-                        <input type="text" id="config-name" required>
-                        <button type="submit">Salvar Configurações</button>
-                    </form>
-                </div>
-            </section>
-
-        </main>
-
-        <nav class="app-nav">
-            <button class="nav-btn active" data-page="inicial" title="Inicial">🏠</button>
-            <button class="nav-btn" data-page="clientes" title="Clientes">👥</button>
-            <button class="nav-btn" data-page="agenda" title="Agenda">🗓️</button>
-            <button class="nav-btn" data-page="financeiro" title="Financeiro">💰</button>
-            <button class="nav-btn" data-page="configuracoes" title="Configurações">⚙️</button>
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>FotoCRM</h2>
+            </div>
+            <div class="sidebar-nav">
+                <button class="nav-btn active" data-page="inicial">
+                    <i data-lucide="home"></i>
+                    <span>Inicial</span>
+                </button>
+                <button class="nav-btn" data-page="clientes">
+                    <i data-lucide="users"></i>
+                    <span>Clientes</span>
+                </button>
+                <button class="nav-btn" data-page="agenda">
+                    <i data-lucide="calendar"></i>
+                    <span>Agenda</span>
+                </button>
+                <button class="nav-btn" data-page="financeiro">
+                    <i data-lucide="dollar-sign"></i>
+                    <span>Financeiro</span>
+                </button>
+                <button class="nav-btn" data-page="configuracoes">
+                    <i data-lucide="settings"></i>
+                    <span>Configurações</span>
+                </button>
+            </div>
+            <div class="sidebar-footer">
+                <button id="btn-logout">
+                    <i data-lucide="log-out"></i>
+                    <span>Sair</span>
+                </button>
+            </div>
         </nav>
 
+        <div class="main-container">
+            <header class="app-header">
+                <button id="btn-menu-toggle" title="Menu"><i data-lucide="menu"></i></button>
+                <h1 id="page-title">Inicial</h1>
+            </header>
+
+            <main id="app-content">
+                
+                <section id="page-inicial" class="page">
+                    <h2>Bem-vindo(a), <span id="user-business-name"></span>!</h2>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3>Próximos Eventos</h3>
+                            <div id="summary-eventos" class="summary-list"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Pagamentos Pendentes</h3>
+                            <div id="summary-financeiro" class="summary-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-clientes" class="page">
+                    <div class="page-header">
+                        <input type="text" id="search-client" placeholder="Buscar cliente..." class="search-bar">
+                        <button id="btn-show-add-client" class="btn-primary">
+                            <i data-lucide="plus"></i>
+                            <span>Novo Cliente</span>
+                        </button>
+                    </div>
+                    <div id="clients-list" class="data-list card">
+                        </div>
+                </section>
+
+                <section id="page-agenda" class="page">
+                    <div class="page-header">
+                        <div class="view-switcher">
+                            <button id="btn-view-month" class="view-btn active">Mês</button>
+                            <button id="btn-view-week" class="view-btn">Semana</button>
+                            <button id="btn-view-list" class="view-btn">Lista</button>
+                        </div>
+                        <button id="btn-show-add-event" class="btn-primary">
+                            <i data-lucide="plus"></i>
+                            <span>Novo Evento</span>
+                        </button>
+                    </div>
+                    <div id="calendar-container" class="card">
+                        <div id="calendar"></div>
+                    </div>
+                </section>
+
+                <section id="page-financeiro" class="page">
+                    <div class="form-container card">
+                        <h3>Nova Transação</h3>
+                        <form id="form-add-transaction">
+                            <input type="text" id="trans-description" placeholder="Descrição" required>
+                            <input type="number" id="trans-amount" placeholder="Valor" step="0.01" required>
+                            <select id="trans-type" required>
+                                <option value="income">Receita</option>
+                                <option value="expense">Despesa</option>
+                            </select>
+                            <input type="date" id="trans-date" required>
+                             <select id="trans-status" required>
+                                <option value="pending">Pendente</option>
+                                <option value="paid">Pago</option>
+                            </select>
+                            <button type="submit">Salvar</button>
+                        </form>
+                    </div>
+                    <h3>Histórico Financeiro</h3>
+                    <div id="transactions-list" class="data-list"></div>
+                </section>
+
+                <section id="page-configuracoes" class="page">
+                    <h3>Configurações</h3>
+                    <div class="form-container card">
+                        <form id="form-settings">
+                            <label for="config-name">Nome do Estúdio</label>
+                            <input type="text" id="config-name" required>
+                            <button type="submit">Salvar</button>
+                        </form>
+                    </div>
+                </section>
+
+            </main>
+        </div>
     </div>
+
+    <div id="modal-add-client" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Novo Cliente</h2>
+                <button class="modal-close-btn" data-modal="modal-add-client">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="modal-body">
+                <form id="form-add-client">
+                    <input type="text" id="client-name" placeholder="Nome completo" required>
+                    <input type="email" id="client-email" placeholder="Email">
+                    <input type="tel" id="client-phone" placeholder="Telefone">
+                    <textarea id="client-notes" placeholder="Anotações..."></textarea>
+                    <button type="submit">Salvar Cliente</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-add-event" class="modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2>Novo Evento</h2>
+                <button class="modal-close-btn" data-modal="modal-add-event">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="modal-body">
+                <form id="form-add-event">
+                    <input type="text" id="event-title" placeholder="Título do Evento" required>
+                    <label for="event-client-select">Cliente</label>
+                    <select id="event-client-select" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                    <label for="event-start">Início</label>
+                    <input type="datetime-local" id="event-start" required>
+                    <label for="event-end">Término</label>
+                    <input type="datetime-local" id="event-end" required>
+                    <input type="text" id="event-location" placeholder="Local do evento">
+                    <select id="event-status" required>
+                        <option value="pending">Pendente</option>
+                        <option value="confirmed">Confirmado</option>
+                        <option value="completed">Concluído</option>
+                    </select>
+                    <button type="submit">Salvar Evento</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
+    
+    <script>
+      lucide.createIcons();
+    </script>
 </body>
 </html>
