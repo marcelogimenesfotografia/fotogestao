@@ -1,4 +1,4 @@
-// JavaScript Document// app.js
+// app.js
 
 // --- Inicialização do Firebase (obtido do firebase-config.js) ---
 // const auth = firebase.auth();
@@ -553,7 +553,7 @@ formSettings.addEventListener('submit', async (e) => {
 });
 
 
-// --- 9. AÇÕES GLOBAIS (Ex: Deletar Item) ---
+// --- 9. AÇÕES GLOIS (Ex: Deletar Item) ---
 // Listener genérico para botões de deletar
 appContainer.addEventListener('click', async (e) => {
     if (e.target.classList.contains('delete-btn')) {
